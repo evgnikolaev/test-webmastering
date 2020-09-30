@@ -346,7 +346,7 @@ Apache 2.4 - перешли, сказали все отказываемся от
 			Флаги
                 NC - не учитывать регистр
                 OR - либо следующее условие
-				L - последнее правило
+				L - последнее правило (дальше RewriteRule не работают)
 				R - перенаправление      (! Для отладки, по умолчанию не редиректит.)
 				F - возвращает статус 403
 				G - возвращает статус 410
@@ -358,58 +358,96 @@ Apache 2.4 - перешли, сказали все отказываемся от
 
 				Условия модуля
                     RewriteCond Тест  Условие [Флаги]
+
+
+
                  https://www.youtube.com/watch?v=tXsCW6simLE&list=PLqQ1VsG-wgxdLJhiYs00OgTtBQJ4G_WXx&index=1&ab_channel=%D0%94%D0%BC%D0%B8%D1%82%D1%80%D0%B8%D0%B9%D0%A2%D1%80%D0%B5%D0%BF%D0%B0%D1%87%D1%91%D0%B2
 
+						  ------------------------- 1-5 ---------------------------------
 
-										#  ------------------------- 1-5 ---------------------------------
+								RewriteEngine On
+								RewriteBase /
 
-										RewriteEngine On
-										RewriteBase /
+								редирект из dir на test.html
+									 RewriteRule ^dir/$ test.html [R]
 
-										# редирект из dir на test.html
-										# RewriteRule ^dir/$ test.html [R]
-
-										# отрицание регулярки, в php отрицания нет
-										# RewriteRule !test1\.php index.html [R]
-
-
-
-										# RewriteCond добавляет допаолнительные условия применяемые к RewriteRule
-										# кидай все запросы на index.html но с уточнением выше %{REQUEST_URI} - часть url с начальным слешем
-										# RewriteCond работает с начальным слешем,   RewriteRule работает без начального слеша
-										# RewriteCond действует только на RewriteRule который ниже
-										# Когда несколько RewriteCond работает как логическое И
-
-										#RewriteCond %{REQUEST_URI} \.php$
-										#RewriteCond %{REQUEST_URI} ^/dir/
-										#RewriteRule .+ index.html [R]
+								отрицание регулярки, в php отрицания нет
+								    RewriteRule !test1\.php index.html
 
 
 
+								RewriteCond добавляет дополнительные условия применяемые к RewriteRule
+								Кидай все запросы на index.html но с уточнением выше %{REQUEST_URI} - часть url с начальным слешем
+								RewriteCond работает с начальным слешем,   RewriteRule работает без начального слеша
+								RewriteCond действует только на RewriteRule который ниже
+								Когда несколько RewriteCond работает как логическое И
 
-										#  ------------------------- 6 ---------------------------------
-										#  Или php или html
-										#RewriteCond %{REQUEST_URI} \.(php|html)$
-										#RewriteRule .+ index.html [R]
-
-										#  Сработает как логическое И , если поставить флаг [OR] сработает как логическое ИЛИ
-										#RewriteCond %{REQUEST_URI} \.jpg [OR]
-										#RewriteCond %{REQUEST_URI} \.php
-										#RewriteRule .+  index.html  [R]
-
+									RewriteCond %{REQUEST_URI} \.php$
+									RewriteCond %{REQUEST_URI} ^/dir/
+									RewriteRule .+ index.html
 
 
-										#  ------------------------- 7 ---------------------------------
-										# Работа с флагами f,d,s в директиве RewriteCond
 
-										# Если есть файл, редиректи на index.html
-										#RewriteCond %{REQUEST_FILENAME} -f
 
-										# Если есть папка, редиректи на index.html
-										RewriteCond %{REQUEST_FILENAME} -d
-										RewriteRule .+  index.html  [R]
+						  ------------------------- 6 ---------------------------------
+								Или php или html
+									RewriteCond %{REQUEST_URI} \.(php|html)$
+									RewriteRule .+ index.html
 
-										# 7   2 минуты todo
+								Сработает как логическое И , если поставить флаг [OR] сработает как логическое ИЛИ
+									RewriteCond %{REQUEST_URI} \.jpg [OR]
+									RewriteCond %{REQUEST_URI} \.php
+									RewriteRule .+  index.html
+
+
+
+						  ------------------------- 7 ---------------------------------
+								Работа с флагами f,d,s в директиве RewriteCond (файлы и папки)
+
+								Если есть файл, редиректи на index.html
+								-s       - файл не нулевого размера
+								!-f      - не существующий файл
+										RewriteCond %{REQUEST_FILENAME} -f
+
+								Если есть папка, редиректи на index.html
+									RewriteCond %{REQUEST_FILENAME} -d
+									RewriteRule .+  index.html
+
+
+						  ------------------------- 8 ---------------------------------
+							 Как работает RewriteRule
+							 !!!!!!  8 видео если не понятно пересмотреть !!!!!
+							 !!!!!!  Все RewriteRule выполняются по очереди сверху вниз. После опять заново все по очереди до тех пор пока адрес перестает изменяться. !!!!!!!
+							 !!!!!!  Сервер сравнивает, Если предыдущий запрос закончился на этом и этот запрос закончился на этом то все, прекращаю редиректить.       !!!!
+							 флаг L - последнее правило (дальше RewriteRule не работают, но файл зачитывается заново )
+							 !!! При этом и отладки нет !!!
+							 будет get = 2 , при повторном проходе , стоит флаг L
+								RewriteRule ^index\.php$ index.php?get=2 [L]
+								RewriteRule .+ index.php?get=1
+
+
+							 !!! Лучше граничные случаи разграничивать, то есть при страться учитывать, чтобы при повторном выполнении, захода в RewriteRule не было !!!!
+							 без RewriteCond будет зацикливание, отменяем повторное выполнение
+								RewriteCond %{REQUEST_URI} !^/test/
+								RewriteRule (.+) test/$1
+
+
+						#  ------------------------- 9 ---------------------------------
+						# Получение запрошенного в карман
+						# get парамтры в кармане не передаются, и в RewriteCond тоже не передаются
+						RewriteCond %{REQUEST_URI} !^/index\.php$
+						RewriteRule (.+) index.php?get=$1 # все без начальных слешей
+
+						#   RewriteCond тоже имеет карманы
+						#   и чтобы к ним обратиться в RewriteRule нужно использовать '%'
+						RewriteCond %{REQUEST_URI} !^/index\.php$
+						RewriteCond %{REQUEST_URI} (.+)
+						RewriteRule (.+) index.php?get=$1&cond=%1
+
+						# NC - флаг для RewriteRule для регистронезависимости
+						# ErrorDocument 404 /404.php - можно указать страница ошибки
+
+
 
 
 
