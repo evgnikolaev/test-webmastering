@@ -432,24 +432,20 @@ Apache 2.4 - перешли, сказали все отказываемся от
 								RewriteRule (.+) test/$1
 
 
-						#  ------------------------- 9 ---------------------------------
-						# Получение запрошенного в карман
-						# get парамтры в кармане не передаются, и в RewriteCond тоже не передаются
-						RewriteCond %{REQUEST_URI} !^/index\.php$
-						RewriteRule (.+) index.php?get=$1 # все без начальных слешей
+						  ------------------------- 9 ---------------------------------
+							 Получение запрошенного в карман
+							 get парамтры в кармане не передаются, и в RewriteCond тоже не передаются
+								RewriteCond %{REQUEST_URI} !^/index\.php$
+								RewriteRule (.+) index.php?get=$1 # все без начальных слешей
 
-						#   RewriteCond тоже имеет карманы
-						#   и чтобы к ним обратиться в RewriteRule нужно использовать '%'
-						RewriteCond %{REQUEST_URI} !^/index\.php$
-						RewriteCond %{REQUEST_URI} (.+)
-						RewriteRule (.+) index.php?get=$1&cond=%1
+							 RewriteCond тоже имеет карманы
+							 и чтобы к ним обратиться в RewriteRule нужно использовать '%'
+								RewriteCond %{REQUEST_URI} !^/index\.php$
+								RewriteCond %{REQUEST_URI} (.+)
+								RewriteRule (.+) index.php?get=$1&cond=%1
 
-						# NC - флаг для RewriteRule для регистронезависимости
-						# ErrorDocument 404 /404.php - можно указать страница ошибки
-
-
-
-
+							 NC - флаг для RewriteRule для регистронезависимости
+							 ErrorDocument 404 /404.php - можно указать страница ошибки
 
 
 
@@ -463,22 +459,20 @@ Apache 2.4 - перешли, сказали все отказываемся от
 			Работает на уровне заголовков.
 
             Создание учетной записи
-            .htpasswd (хранится  в каждой строке login:passwd)
-			при помощи утилиты htpasswd.exe:
+            .htpasswd (хранится  в каждой строке login:passwd - admin:$apr1$uPcyl62w$.Y0WeLZ.LvRUAMbbSh369/)
+			при помощи утилиты htpasswd.exe:(либо при помощи генератора в инете)
                     htpasswd  -c   путь   имя_пользователя     (при первой записи и при создании ставим флаг -c)
                     htpasswd    путь   имя_пользователя
 
 
 			И в htaccess  добавляем настройки
                 Стандартные:
-		            Тип аутентфикации
-		                AuthType Basic
-					Строка сообщения
-		                AuthName "Запретная зона"
-	               Файл с паролями. ПОлный физический путь
-		                AuthUserFile 'c:/secure/.htpasswd'
-	                Включение защиты
-	                    Require valid-user
+		           Пример:
+					AuthType Basic                                                          -  Тип аутентфикации
+					AuthName "Запретная зона"                                                 -  Строка сообщения
+					AuthUserFile C:\Users\e.nikolaev\Apache24\mysite\htdocs\.htpasswd       -  Файл с паролями. ПОлный физический путь
+					Require valid-user                                                      -  Включение защиты
+
 
 				Дополнительно:
 	                Допуск конкретных пользователей
@@ -489,11 +483,314 @@ Apache 2.4 - перешли, сказали все отказываемся от
 	                    Require group admins manager
 
 
+               Базовую аутентификацию можно обернуть для определенных файлов
+                    <FilesMatch "\.(zip|rar)$">
+		                    AuthType Basic
+							AuthName "Запретная зона"
+							AuthUserFile C:\Users\e.nikolaev\Apache24\mysite\htdocs\.htpasswd
+							Require valid-user
+                    <FilesMatch>
 
-					Защита трафика [ssl-tls]
+
+				---- Защита трафика [ssl-tls] -----
+	                    при передаче все шифруется, и заголовки и данные, кроме get-параметров.
+	                    Оба ( A и B ) должны использовать одинаковую криптографию с открытым и приватным ключом.
+						A берет, шифрует сообщение с помощью открытого ключа, B получает данные и расшифровывает с помощью закрытого ключа.
+	                    При этом должен быть еще тренд (T) - доверенное лицо.Ему все доверяют. У них у обоих  есть общий ключ с T (ключ с TA и ключ с TB).
+	                    Чтобы точно знать от A общается с B. То есть письмо оборачивается два раза ключом A и ключом T , и посылается T для проверки.
+	                    T распаковывает, сверяет с общим ключом (TA и добавляет чтобы можно было распаковать  c TB ) и отправляет A что это именно A посылает сообщение.
+	                    B принимает, распаковывает все, сверяясь с общим ключом(TB) и своим привытным ключом.
+	                    Так работает https-протокол.
+                        В роли T выступают доверенные центры, которые раздают сертификаты.
+						Сертификаты бывают:
+                        Доверенные(как через ностариуса, стоит денег)
+                        Самоподписанные(как доверненность от руки)
+
+							(не проделал)
+						 1) создание самописного сертификата
+							>cd conf
+							>openssl.exe
+							OpenSSL>req -config openssl.cnf -new -out mysite.csr
+							OpenSSL>rsa -in privkey.pem -out mysite.key
+							OpenSSL>x509 -in mysite.csr -out mysite.cert -req -signkey mysite.key -days 365
+
+						2) Load module ssl_module_modules/mod_ssl.so
+
+						3) </VirtualHost 127.0.0.1:443>
+							SSLEngine On
+							SSLCertificateFile ../ssl/mysite.cert
+							SSLCertificateFile ../ssl/mysite.key
 
 
 
-                    29 мин
+
+ -------------------------------------- №9 ------------------------------------
+
+						Типы MIME:
+							/comf/mime.types           - путь , Глобавльный список MIME-типов
+							DefaultType text/plain     - тип по умолчанию+
+							AddType text/xml .html - Добавление нового расширения файлов (Команда браузеру, когда придет файл html, отобрази как xml)
+
+
+						Кастомные заголовки
+	                        Модуль для всех заголовков ответа
+	                        LoadModule headers_module modules/mod_headers.so
+							Модуль для всех заголовков Expires
+	                        LoadModule expires_module modules/mod_expires.so
+
+	                        Header set X-My-Header 'Value'  (Установить, принято с X-...)
+	                        Header unset X-My-Header        (удалить)
+
+
+
+						Управление кеширвоанием ресурсов
+							 Запрет кеширование
+								 Header set Cache-Control 'no-cache' (не кешировать на диске)
+								 Header set Cache-Control 'no-store' (не кешировать в оперативной памяти)
+								 Header set Cache-Control 'private, no-cache, must-revalidate'
+	                             ExpiresActive On
+	                             ExpiresDefault 'now'
+                            Разрешение кеширования
+								 Header set Cache-Control 'public,max-age=600'   ( Кешируй в секундах от текущей даты )
+
+								 ExpiresActive On                                   ( Этот заголовок, позволяет задавать ExpiresDefault, где обычной строкой задаем время кеширвоания)
+								 ExpiresDefault 'access plus 2 days'                ( текущая дата(access) + 2 дня )
+								 ExpiresDefault 'modification plus 3 hours'             ( дата изменения файла(modification) + 3 часа )
+                                 Кеширование по типу ресурсов
+								 ExpiresByType text/html 'access plus 2 days'    (кешируй text/html текущая дата(access) + 2 дня)
+								 ExpiresByType image/gif 'access plus 2 weeks'
+
+
+
+						Привязка серверных обработчиков
+                            CGI ( выполняется как исполняемые фалы (как exe), и так как они небезопасны все cgi-скрипты кидаем в одну папку, указывая ScriptAlias )
+                                ScriptAlias "/cgi-bin/" "/www/cgi-bin/"
+                                AddHandler cgi .cgi .pl
+
+
+                            Модуль
+                                LoadModule php5_module "/PHP/php5apache2_2.dll"
+                                AddType application/x-httpd-php .php
+
+
+							 SSI
+							    Options _Includes
+							    AddOutputFilter Icludes .shtml
+							    AddType text/html .shtml
+
+
+
+									Пример      https://resource-gsv.ru/webserver/download.html
+												https://resource-gsv.ru/webserver/connect-php-in-apache.html
+												Скачаем php, и httpd.conf:
+													Раскомментируем
+														LoadModule negotiation_module modules/mod_negotiation.so
+														LoadModule rewrite_module modules/mod_rewrite.so
+														LoadModule setenvif_module modules/mod_setenvif.so
+
+													Добавим
+														PhpIniDir "C:\Users\e.nikolaev\Downloads\php-7.4.11-Win32-vc15-x64"
+														LoadModule php7_module "C:\Users\e.nikolaev\Downloads\php-7.4.11-Win32-vc15-x64/php7apache2_4.dll"
+														AddHandler application/x-httpd-php .php
+
+														<IfModule dir_module>
+												            DirectoryIndex index.html index.php
+														</IfModule>
+														И настраиваем php.ini
+
+
+
+
+
+
+ -------------------------------------- №12 ------------------------------------
+
+                    веб сервер nginx (nginx.org)
+				    Apache немного тяжелее, каждый раз зачитывает .htaccess.
+				    Задача была сделать быстрый веб-сервер. Уго не используют для хостинга, у него один кофигурационный файл, который доступен только для администратора.
+				    !!!!Первая задача - служить выделенным сервером, сам рулю своим сервером (хостить не получится, то есть раздавать папки)!!!!
+
+
+
+						Основные папки (структура похожа)
+                            nginx.exe - основной файл
+				            html - аналог htdocs (apache)
+							conf - настройки
+                                nginx.conf - основной файл конфиугурации
+								mime.types - типы mime
+
+
+					 Управление сервером
+                        nginx.exe - запуск
+                    Управление запущенным сервером, 	из командной строки, переходим в папку nginx
+                        nginx -s stop     - останавливает полностью
+                        nginx -s quit     - как закрывающийся магазин, ни кого больше не впускает
+                        nginx -s reload   - перезагрузачитай конфигурационный файл, при этом сам сервер работает.
+
+
+
+					Правила конфигурации nginx.conf похожи на apache, но слегка отличаются
+						#  - однострочный комментарий
+	                    ИмяДирективы значение [значение2 ...];  - однострочная директива (; - ставим!)
+
+                        Блочная директива
+						ИмяДирективы [значение]{
+							ИмяДирективы значение
+                        }
+
+						!Физические пути прописываются (OC Windows) прописываются с прямым слешем  - C:/Users/e.nikolaev/nginx
+
+
+
+
+         -----------------  Основные директивы ---------------------
+                            http - главая глобальная дирктива.
+
+							 error_log logs/error.log           - логи nginx
+							 access_log logs/access.log main    - пользовательские логи (common_log в apache), main - метка
+                             log_format main '$remote_addr - [$time_local] "$request"'
+
+							 Подключение файлов
+							 include mime.types
+
+							 Доступ
+							 deny all
+							 allow 127.0.01
+
+							 Документы
+							 root document_root             - корневая папка сайта
+							 index index.html index.htm     - (directoryIndex в apache)
+							 autoindex off                  - (Option Indexes в apache)
+							 default_type application/octet-stream  - (DefaultType по умолчанию в apache)
+
+							 Файлы ошибок
+                             error_page 404 /404.html
+
+                             Заголовки
+                             add_header Cache-Control no-store
+                             expires 24h
+                             expires modified +24h
+
+
+
+
+
+
+
+       ----------------- Настрока виртуального хоста, директива server ---------------------
+                        !!! Здесь все работает не относительно папок, а относительно запроса . За это дело отвечает location !!!!
+
+						    server {
+						        listen       80; #127.0.0.1
+						        server_name  localhost;
+
+                                #обращение к корню
+						        location / {
+						            root   www;                   - корневая папка
+						            index  index.html index.htm;  - индексный файл
+						        }
+
+                                # ошибки, можно указать сразу несколько
+								error_page   500 502 503 504  /50x.html;
+
+
+                                #обращение к /foo/
+						        location /foo/ {
+						            alias /some/path/;     - ссылка на папку
+						        }
+
+
+                                #перенаправления
+						        location /bar/ {
+						            rewrite ^(.*)$ http://site.com permanent #301;     (для 302 - используем redirect, для 301 - используем permanent)
+						        }
+                                location /deleted.html {
+						            return 410;             (вернем 410 статус)
+						        }
+
+
+								#можно делать сложные перенаправления
+								location /file.html {
+
+                                        #разбираем get-параметры,  /file.html?lock=1&abc=2
+										# ~ говорит, что будет сравниваться с регуляркой, а не строкой
+											if($query_string ~ ^lock=1){
+											    return 403;
+											 }
+
+                                        #под каждый get-параметр заводится переменная, $arg_...   ( в нашем случае $arg_lock и $arg_abc)
+											if($arg_lock ~ "0"){
+											    return 402;
+											 }
+						        }
+						    }
+
+
+
+
+         ----------------- Описание директорий ---------------------
+							(порядок 40 мин)
+
+                         location = / {
+						    # = / точное совпадение
+						 }
+
+						location / {
+						    # означает /..что-то еще
+						 }
+
+						location /documents/ {
+						    # означает /documents/..что-то еще
+						 }
+
+						location ~ *\.(gif|jpg)$ {
+						    # ~ - означает регулярное выражение
+						 }
+
+
+						location ^~ /images/ {
+						    # ^~  - не должно проверяться на регулярное выражение
+                            # даже если попадется в других выражения, не надо его применять, напимер /images/1.gif
+						 }
+
+
+						перенаправление с меткой (если будет 405 статус, перенаправь его с 200 на метку @dir)
+	                        error_page 405 - 200 @dir
+	                        location @dir{
+								root /some_root
+	                        }
+
+
+
+
+ -------------------------------------- №11 ------------------------------------
+!!! Вторая задача, отдача статики.
+ Разделяем на apache ставим скрипты, а на статику nginx, чтобы отдавало быстрее. Ставим мордой nginx, за ним apache.
+ В nginx прописываем, если это картики, стили и тд, то переходи в папку и забирай. А если это php , передавай apache.
+
+
+
+ server {
+    listen       80;
+    server_name  localhost;
+
+    #если статика
+    location / {
+       proxy_pass http://127.0.0.1;
+        proxy_set_headers Host $host;
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+
 
 */
