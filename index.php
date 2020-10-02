@@ -764,33 +764,79 @@ Apache 2.4 - перешли, сказали все отказываемся от
 
 
  -------------------------------------- №11 ------------------------------------
-!!! Вторая задача, отдача статики.
- Разделяем на apache ставим скрипты, а на статику nginx, чтобы отдавало быстрее. Ставим мордой nginx, за ним apache.
- В nginx прописываем, если это картики, стили и тд, то переходи в папку и забирай. А если это php , передавай apache.
+			!!! Вторая задача, отдача статики.
+			 Разделяем на apache ставим скрипты, а на статику nginx, чтобы отдавало быстрее. Ставим мордой nginx, за ним apache.
+			 В nginx прописываем, если это картики, стили и тд, то переходи в папку и забирай. А если это php , передавай apache.
+
+
+						 server {
+						    listen       80;
+						    server_name  localhost;
+
+							 #если статика
+						    location ~\.(jpg|png|css|js) {
+						        root   C:/Users/e.nikolaev/Apache24/mysite/htdocs;   - переходи в папку и забирай
+								index  index.html index.htm;
+						    }
+
+
+						    #если не статика
+						    location / {
+						       proxy_pass http://127.0.0.1:81;     - этого должно хватить, но нужно еще прокинуть заголовки пользователя (так как nginx обращается к apache)
+                                                                        (также меняем в настройках apache порт, document-root)
+						        proxy_set_header Host $host;                       - перезапиши заголовок host
+						        proxy_set_header X-Real-IP $remote_addr;           - добавь заголовок remote_addr пользователя, т.к nginx тоже передает заголовок remote_addr
+						        proxy_set_header X-Forwarded-For $remote_addr;     - добавь заголовок remote_addr пользователя, т.к nginx тоже передает заголовок remote_addr
+						    }
+						}
 
 
 
- server {
-    listen       80;
-    server_name  localhost;
 
-    #если статика
-    location / {
-       proxy_pass http://127.0.0.1;
-        proxy_set_headers Host $host;
-    }
+            !!! Третья задача,  использование nginx как балансировщик нагрузки.
+                Стоит nginx , а за ним несколько apache. nginx разруливает какому apache обратиться.
+
+						apache - метка, название может быть любым.
+				        weight - просто число, где выше, тот и приоритетнее.
+					        upstream apache{
+								server 127.0.0.1:81 weight=5;
+								server 127.0.0.1:82;
+								server 127.0.0.1:83;
+								server 127.0.0.1:84 down;
+							}
+							server {
+							    listen       80;
+							    server_name  mysite.local;
+							    location / {
+							       proxy_pass http://apache;  - прописываем имя метки
+							        proxy_set_header Host $host;
+							        proxy_set_header X-Real-IP $remote_addr;
+							        proxy_set_header X-Forwarded-For $remote_addr;
+							    }
+							}
 
 
-}
 
 
+  -------------------------------------- Битрикс виртуальная машина ------------------------------------
 
+                /var/log/ здесь логи
 
+				Команды используемые на CentOS
+					Apache:
+				    service httpd restart (start| stop)
+					systemctl start httpd.service
+					systemctl stop httpd.service
+					systemctl restart httpd.service
 
+					nginx:
+					service nginx reload (restart | start| stop )
+					systemctl reload nginx
+					systemctl start nginx
+					systemctl stop nginx
 
-
-
-
+                    Конфиурационные файлы
+					https://www.acrit-studio.ru/technical-support/configuring-the-module-export-on-trade-portals/server-configuration-BitrixVM/
 
 
 */
