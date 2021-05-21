@@ -839,4 +839,12 @@ Apache 2.4 - перешли, сказали все отказываемся от
 					https://www.acrit-studio.ru/technical-support/configuring-the-module-export-on-trade-portals/server-configuration-BitrixVM/
                     https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32&LESSON_ID=11783
 
+
+
+					установка node js на сервер (можно сразу под битриксом)
+					https://stackoverflow.com/questions/55057898/npm-command-not-found-centos-7
+					https://timeweb.com/ru/community/articles/kak-ustanovit-node-js-na-server-s-linux
+
+
+
 */
