@@ -837,6 +837,6 @@ Apache 2.4 - перешли, сказали все отказываемся от
 
                     Конфиурационные файлы
 					https://www.acrit-studio.ru/technical-support/configuring-the-module-export-on-trade-portals/server-configuration-BitrixVM/
-
+                    https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32&LESSON_ID=11783
 
 */
